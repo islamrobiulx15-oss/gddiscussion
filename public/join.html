@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Join GD</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <main class="container">
+    <h1>Join Group Discussion</h1>
+    <div id="info"></div>
+
+    <label>Your name</label>
+    <input id="name" placeholder="Your name" />
+
+    <label>Role</label>
+    <select id="role">
+      <option value="participant">Participant</option>
+      <option value="recruiter">Recruiter</option>
+      <option value="manager">Manager</option>
+    </select>
+
+    <div id="codeSection">
+      <label>Enter passcode</label>
+      <input id="code" placeholder="Passcode" />
+    </div>
+
+    <div style="margin-top:12px">
+      <button id="enter">Enter Room</button>
+    </div>
+  </main>
+
+  <script>
+    (async function(){
+      const params = new URLSearchParams(location.search);
+      const room = params.get('room');
+      if(!room){ document.getElementById('info').innerText='Missing room parameter'; return; }
+      document.getElementById('info').innerText = `Room: ${room}`;
+
+      // fetch room info
+      let info = null;
+      try{
+        const r = await fetch(`/room-info?room=${encodeURIComponent(room)}`);
+        if(r.ok) info = await r.json();
+      }catch(e){}
+      if(info && info.requiresCode){ document.getElementById('codeSection').style.display='block'; }
+      else { document.getElementById('codeSection').style.display='none'; }
+
+      document.getElementById('enter').addEventListener('click', async ()=>{
+        const name = encodeURIComponent(document.getElementById('name').value || 'guest');
+        const role = document.getElementById('role').value;
+        const code = document.getElementById('code').value || '';
+        const res = await fetch('/validate-room', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ room, code, name, role }) });
+        if (res.ok){
+          // go to gd room
+          location.href = `/gd.html?room=${encodeURIComponent(room)}&role=${encodeURIComponent(role)}&name=${name}`;
+        } else {
+          const j = await res.json().catch(()=>({ error: 'failed' }));
+          alert('Could not join: ' + (j.error || 'unknown'));
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>GD Analysis</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <main class="container">
+    <h1>GD Analysis</h1>
+    <div id="player"></div>
+    <div id="stats"></div>
+    <p>This is a simple analysis page. It shows the recording and basic metadata (duration, size).</p>
+  </main>
+
+  <script>
+    (async function(){
+      const params = new URLSearchParams(location.search);
+      const recording = params.get('recording');
+      if(!recording) { document.getElementById('player').innerText='No recording provided'; return; }
+      const player = document.createElement('video'); player.controls = true; player.src = recording; player.style.maxWidth='100%';
+      document.getElementById('player').appendChild(player);
+      player.addEventListener('loadedmetadata', async ()=>{
+        const duration = player.duration;
+        // Try to fetch size with HEAD
+        let sizeText = 'unknown';
+        try{
+          const r = await fetch(recording,{method:'HEAD'});
+          const size = r.headers.get('content-length');
+          if(size) sizeText = Math.round(size/1024) + ' KB';
+        }catch(e){}
+        document.getElementById('stats').innerHTML = `<strong>Duration:</strong> ${Math.round(duration)}s<br><strong>Size:</strong> ${sizeText}`;
+      });
+    })();
+  </script>
+</body>
+</html>
