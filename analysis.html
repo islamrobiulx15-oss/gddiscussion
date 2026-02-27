@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>GD Analysis</title>
-  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <main class="container">
@@ -16,6 +16,7 @@
 
   <script>
     (async function(){
+      try{ const cfg = await fetch('config.json').then(r=>r.json()); window.BACKEND_URL = cfg.BACKEND_URL || ''; }catch(e){ window.BACKEND_URL = ''; }
       const params = new URLSearchParams(location.search);
       const recording = params.get('recording');
       if(!recording) { document.getElementById('player').innerText='No recording provided'; return; }
@@ -23,10 +24,10 @@
       document.getElementById('player').appendChild(player);
       player.addEventListener('loadedmetadata', async ()=>{
         const duration = player.duration;
-        // Try to fetch size with HEAD
         let sizeText = 'unknown';
         try{
-          const r = await fetch(recording,{method:'HEAD'});
+          const headUrl = recording;
+          const r = await fetch(headUrl,{method:'HEAD'});
           const size = r.headers.get('content-length');
           if(size) sizeText = Math.round(size/1024) + ' KB';
         }catch(e){}

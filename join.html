@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Join GD</title>
-  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <main class="container">
@@ -32,29 +32,45 @@
   </main>
 
   <script>
+    window.BACKEND_URL = '';
     (async function(){
+      try{ const cfg = await fetch('config.json').then(r=>r.json()); window.BACKEND_URL = cfg.BACKEND_URL || ''; }catch(e){}
       const params = new URLSearchParams(location.search);
       const room = params.get('room');
       if(!room){ document.getElementById('info').innerText='Missing room parameter'; return; }
       document.getElementById('info').innerText = `Room: ${room}`;
 
-      // fetch room info
+      // fetch room info (if backend configured). If no backend, allow client-side demo join.
       let info = null;
       try{
-        const r = await fetch(`/room-info?room=${encodeURIComponent(room)}`);
-        if(r.ok) info = await r.json();
+        const base = window.BACKEND_URL || '';
+        if (base) {
+          const infoUrl = `${base}/room-info?room=${encodeURIComponent(room)}`;
+          const r = await fetch(infoUrl);
+          if(r.ok) info = await r.json();
+        }
       }catch(e){}
-      if(info && info.requiresCode){ document.getElementById('codeSection').style.display='block'; }
+      // If backend provides requiresCode OR URL contains code param, show code input
+      const urlParams = new URLSearchParams(location.search);
+      const codeParam = urlParams.get('code');
+      if((info && info.requiresCode) || codeParam) { document.getElementById('codeSection').style.display='block'; }
       else { document.getElementById('codeSection').style.display='none'; }
 
       document.getElementById('enter').addEventListener('click', async ()=>{
         const name = encodeURIComponent(document.getElementById('name').value || 'guest');
         const role = document.getElementById('role').value;
         const code = document.getElementById('code').value || '';
-        const res = await fetch('/validate-room', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ room, code, name, role }) });
+        const base = window.BACKEND_URL || '';
+        if (!base) {
+          // No backend — validate against code param if present, otherwise allow
+          if (codeParam && codeParam !== code) { alert('Invalid passcode'); return; }
+          location.href = `gd.html?room=${encodeURIComponent(room)}&role=${encodeURIComponent(role)}&name=${name}`;
+          return;
+        }
+        const validateUrl = `${base}/validate-room`;
+        const res = await fetch(validateUrl, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ room, code, name, role }) });
         if (res.ok){
-          // go to gd room
-          location.href = `/gd.html?room=${encodeURIComponent(room)}&role=${encodeURIComponent(role)}&name=${name}`;
+          location.href = `gd.html?room=${encodeURIComponent(room)}&role=${encodeURIComponent(role)}&name=${name}`;
         } else {
           const j = await res.json().catch(()=>({ error: 'failed' }));
           alert('Could not join: ' + (j.error || 'unknown'));
