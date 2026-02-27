@@ -4,36 +4,51 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>GD Platform — Join</title>
-  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <main class="container">
     <h1>Group Discussion Platform</h1>
     <p>Select a portal and join with a room code.</p>
+  <script>
+    // Load configurable backend URL for static hosting
+    window.BACKEND_URL = '';
+    (async function(){
+      try{ const cfg = await fetch('config.json').then(r=>r.json()); window.BACKEND_URL = cfg.BACKEND_URL || ''; }catch(e){}
 
-    <label>Portal</label>
-    <select id="mode">
-      <option value="practice">Practice (mock)</option>
-      <option value="interview">Interview (serious)</option>
-    </select>
+      function randomCode() { return Math.random().toString(36).slice(2,9).toUpperCase(); }
+      document.getElementById('gen').onclick = () => document.getElementById('room').value = randomCode();
+      document.getElementById('join').onclick = async () => {
+        const mode = document.getElementById('mode').value;
+        const role = document.getElementById('role').value;
+        const name = encodeURIComponent(document.getElementById('name').value || role);
+        const room = encodeURIComponent(document.getElementById('room').value || randomCode());
+        const requireCode = document.getElementById('requireCode').checked;
+        const passcode = requireCode ? document.getElementById('passcode').value : '';
 
-    <label>Role</label>
-    <select id="role">
-      <option value="participant">Participant</option>
-      <option value="recruiter">Recruiter</option>
-      <option value="manager">Manager</option>
-    </select>
-
-    <label>Your name</label>
-    <input id="name" placeholder="Your name" />
-
-    <label>Room code (visible to participants)</label>
-    <div style="display:flex;gap:8px;align-items:center;">
-      <input id="room" placeholder="Enter code or generate" />
-      <button id="gen">Generate</button>
-    </div>
-
-    <label>Require join passcode?</label>
+        // choose endpoint depending on BACKEND_URL (empty -> same origin)
+        const backend = window.BACKEND_URL || '';
+        const url = backend ? `${backend}/create-room` : '/create-room';
+        try {
+            if (!backend) {
+              // No backend configured — generate client-side link for static demo
+              let link = location.origin + `/join.html?room=${room}&mode=${mode}`;
+              if (passcode) link += `&code=${encodeURIComponent(passcode)}`;
+              await navigator.clipboard.writeText(link).catch(()=>{});
+              alert('Shareable demo link copied to clipboard:\n' + link + '\nNote: video features require a running backend.');
+              window.open(link, '_blank');
+              return;
+            }
+            const res = await fetch(url, { method: 'POST', headers: { 'Content-Type':'application/json' }, body: JSON.stringify({ room: room, code: passcode || null, mode }) });
+            const json = await res.json();
+            const link = (backend ? backend : location.origin) + json.link;
+            await navigator.clipboard.writeText(link);
+            alert('Shareable link copied to clipboard:\n' + link + '\nYou can also open it now to join.');
+            window.open(link, '_blank');
+          } catch (e) { alert('Failed to create room: '+(e.message||e)); }
+      }
+    })();
+  </script>
     <div style="display:flex;gap:8px;align-items:center;">
       <input id="requireCode" type="checkbox" />
       <input id="passcode" placeholder="Enter passcode (optional)" style="flex:1" />
