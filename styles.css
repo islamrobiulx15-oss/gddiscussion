@@ -1,0 +1,13 @@
+:root{ --bg:#0f1724; --card:#0b1220; --accent:#4f46e5; --muted:#94a3b8; }
+html,body{ height:100%; margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial; background:linear-gradient(180deg,#071024 0%, #0b1220 100%); color:#e6eef8 }
+.container{ max-width:900px; margin:40px auto; padding:20px; background:rgba(255,255,255,0.03); border-radius:8px }
+.topbar{ display:flex; justify-content:space-between; padding:12px 20px; background:rgba(0,0,0,0.2) }
+.room{ display:flex; gap:16px; padding:20px }
+.controls{ width:220px }
+.videos{ display:flex; flex-wrap:wrap; gap:12px; flex:1 }
+.tile{ width:220px; background:rgba(255,255,255,0.02); padding:6px; border-radius:6px }
+.tile video{ width:100%; height:140px; background:#000 }
+.caption{ font-size:13px; color:var(--muted); margin-top:6px }
+label{ display:block; margin-top:10px; color:var(--muted) }
+input,select,button{ padding:8px; border-radius:6px; border:0; background:rgba(255,255,255,0.03); color:inherit }
+button{ cursor:pointer }

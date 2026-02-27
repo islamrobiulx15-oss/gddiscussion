@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>GD Platform — Join</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <main class="container">
+    <h1>Group Discussion Platform</h1>
+    <p>Select a portal and join with a room code.</p>
+
+    <label>Portal</label>
+    <select id="mode">
+      <option value="practice">Practice (mock)</option>
+      <option value="interview">Interview (serious)</option>
+    </select>
+
+    <label>Role</label>
+    <select id="role">
+      <option value="participant">Participant</option>
+      <option value="recruiter">Recruiter</option>
+      <option value="manager">Manager</option>
+    </select>
+
+    <label>Your name</label>
+    <input id="name" placeholder="Your name" />
+
+    <label>Room code (visible to participants)</label>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <input id="room" placeholder="Enter code or generate" />
+      <button id="gen">Generate</button>
+    </div>
+
+    <label>Require join passcode?</label>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <input id="requireCode" type="checkbox" />
+      <input id="passcode" placeholder="Enter passcode (optional)" style="flex:1" />
+    </div>
+
+    <div style="margin-top:12px">
+      <button id="join">Join</button>
+    </div>
+  </main>
+
+  <script>
+    function randomCode() { return Math.random().toString(36).slice(2,9).toUpperCase(); }
+    document.getElementById('gen').onclick = () => document.getElementById('room').value = randomCode();
+    document.getElementById('join').onclick = async () => {
+      const mode = document.getElementById('mode').value;
+      const role = document.getElementById('role').value;
+      const name = encodeURIComponent(document.getElementById('name').value || role);
+      const roomEl = document.getElementById('room');
+      const room = encodeURIComponent(roomEl.value || randomCode());
+      const requireCode = document.getElementById('requireCode').checked;
+      const passcode = requireCode ? document.getElementById('passcode').value : '';
+
+      // create room on server so join links will require passcode
+      try {
+        const res = await fetch('/create-room', { method: 'POST', headers: { 'Content-Type':'application/json' }, body: JSON.stringify({ room: room, code: passcode || null, mode }) });
+        const json = await res.json();
+        // show share modal / copy link
+        const link = location.origin + json.link;
+        await navigator.clipboard.writeText(link);
+        alert('Shareable link copied to clipboard:\n' + link + '\nYou can also open it now to join.');
+        // open join page in new tab
+        window.open(link, '_blank');
+      } catch (e) { alert('Failed to create room: '+e.message); }
+    }
+  </script>
+</body>
+</html>
