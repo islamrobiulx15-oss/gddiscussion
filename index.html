@@ -9,27 +9,59 @@
 <body>
   <main class="container">
     <h1>Group Discussion Platform</h1>
-    <p>Select a portal and join with a room code.</p>
-  <script>
-    // Load configurable backend URL for static hosting
-    window.BACKEND_URL = '';
-    (async function(){
-      try{ const cfg = await fetch('config.json').then(r=>r.json()); window.BACKEND_URL = cfg.BACKEND_URL || ''; }catch(e){}
+    <p>Create or join a GD room. Choose a portal, your role, then generate or enter a room code.</p>
 
-      function randomCode() { return Math.random().toString(36).slice(2,9).toUpperCase(); }
-      document.getElementById('gen').onclick = () => document.getElementById('room').value = randomCode();
-      document.getElementById('join').onclick = async () => {
-        const mode = document.getElementById('mode').value;
-        const role = document.getElementById('role').value;
-        const name = encodeURIComponent(document.getElementById('name').value || role);
-        const room = encodeURIComponent(document.getElementById('room').value || randomCode());
-        const requireCode = document.getElementById('requireCode').checked;
-        const passcode = requireCode ? document.getElementById('passcode').value : '';
+    <label>Portal</label>
+    <select id="mode">
+      <option value="practice">Practice (mock)</option>
+      <option value="interview">Interview (serious)</option>
+    </select>
 
-        // choose endpoint depending on BACKEND_URL (empty -> same origin)
-        const backend = window.BACKEND_URL || '';
-        const url = backend ? `${backend}/create-room` : '/create-room';
-        try {
+    <label>Role</label>
+    <select id="role">
+      <option value="participant">Participant</option>
+      <option value="recruiter">Recruiter</option>
+      <option value="manager">Manager</option>
+    </select>
+
+    <label>Your name</label>
+    <input id="name" placeholder="Your name" />
+
+    <label>Room code</label>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <input id="room" placeholder="Enter code or generate" />
+      <button id="gen">Generate</button>
+    </div>
+
+    <label>Require join passcode?</label>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <input id="requireCode" type="checkbox" />
+      <input id="passcode" placeholder="Enter passcode (optional)" style="flex:1" />
+    </div>
+
+    <div style="margin-top:12px">
+      <button id="join">Create & Share Room</button>
+    </div>
+
+    <script>
+      // Load configurable backend URL for static hosting
+      window.BACKEND_URL = '';
+      (async function(){
+        try{ const cfg = await fetch('config.json').then(r=>r.json()); window.BACKEND_URL = cfg.BACKEND_URL || ''; }catch(e){}
+
+        function randomCode() { return Math.random().toString(36).slice(2,9).toUpperCase(); }
+        document.getElementById('gen').onclick = () => document.getElementById('room').value = randomCode();
+        document.getElementById('join').onclick = async () => {
+          const mode = document.getElementById('mode').value;
+          const role = document.getElementById('role').value;
+          const name = encodeURIComponent(document.getElementById('name').value || role);
+          const room = encodeURIComponent(document.getElementById('room').value || randomCode());
+          const requireCode = document.getElementById('requireCode').checked;
+          const passcode = requireCode ? document.getElementById('passcode').value : '';
+
+          const backend = window.BACKEND_URL || '';
+          const url = backend ? `${backend}/create-room` : '/create-room';
+          try {
             if (!backend) {
               // No backend configured — generate client-side link for static demo
               let link = location.origin + `/join.html?room=${room}&mode=${mode}`;
@@ -46,17 +78,9 @@
             alert('Shareable link copied to clipboard:\n' + link + '\nYou can also open it now to join.');
             window.open(link, '_blank');
           } catch (e) { alert('Failed to create room: '+(e.message||e)); }
-      }
-    })();
-  </script>
-    <div style="display:flex;gap:8px;align-items:center;">
-      <input id="requireCode" type="checkbox" />
-      <input id="passcode" placeholder="Enter passcode (optional)" style="flex:1" />
-    </div>
-
-    <div style="margin-top:12px">
-      <button id="join">Join</button>
-    </div>
+        }
+      })();
+    </script>
   </main>
 
   <script>
@@ -82,7 +106,7 @@
         // open join page in new tab
         window.open(link, '_blank');
       } catch (e) { alert('Failed to create room: '+e.message); }
-    }
+  
   </script>
 </body>
 </html>
